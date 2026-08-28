@@ -22,13 +22,22 @@ import {
 import { DILEMMA_CARDS, CARD_BY_ID } from "@shared/cards";
 import { EXTERNAL_EVENTS, EXTERNAL_EVENT_BY_ID } from "@shared/external-events";
 import { drizzle } from "drizzle-orm/better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import Database from "better-sqlite3";
 import { eq, desc } from "drizzle-orm";
+import path from "node:path";
 
 const sqlite = new Database("data.db");
 sqlite.pragma("journal_mode = WAL");
 
 export const db = drizzle(sqlite);
+
+// Self-healing schema: applies any pending SQL migrations on startup.
+// Safe to run on every boot — drizzle tracks which migrations already ran
+// in a bookkeeping table, so this is a no-op once the schema is current.
+// Critical for fresh hosts (e.g. a new Render deploy) where the SQLite
+// file starts out completely empty.
+migrate(db, { migrationsFolder: path.join(process.cwd(), "migrations") });
 
 // Scoring weights — transparent, not scientific. Shown in the dashboard's
 // "how this is calculated" breakdown so the facilitator can unpack it live.

@@ -27,7 +27,11 @@ import Database from "better-sqlite3";
 import { eq, desc } from "drizzle-orm";
 import path from "node:path";
 
-const sqlite = new Database("data.db");
+// DATA_DIR lets us point the SQLite file at a Render persistent disk's mount
+// path (e.g. /var/data) in production, while defaulting to the project root
+// for local development — unchanged behavior when the env var isn't set.
+const dataDir = process.env.DATA_DIR || process.cwd();
+const sqlite = new Database(path.join(dataDir, "data.db"));
 sqlite.pragma("journal_mode = WAL");
 
 export const db = drizzle(sqlite);
